@@ -1,20 +1,8 @@
 import { Server, Socket } from 'socket.io';
 import ConductorInterface from '../interface/conductor.interface';
-import Conductores from '../models/conductor.models';
-
-interface DetallePedido {
-  origen: any, 
-  destino: any, 
-  servicio: string,
-  cliente: string,
-  cliente_id: string,
-  nombre_origen: string,
-  nombre_destino: string,
-  descripcion_descarga: string,
-  referencia: number,
-  monto: number,
-  socket_client_id: string
-}
+import Conductores from '../models/conductores.models';
+import { DetallePedido } from '../interface/detalle_pedido.interface';
+import ConductorModels from '../models/conductor.models';
 
 class SocketsConfig {
 
@@ -33,9 +21,8 @@ class SocketsConfig {
     this.io.on('connection', (socket: Socket) => {
       console.log(`El cliente ${socket.id} se ha conectado`);
       
-      // -------------------------------------------------------------------
+      // -----------------------CONDUCTOR--------------------------------------------
       socket.on('conductor online', (payload: ConductorInterface) => {
-    
         this.conductores.addConductor({
             id: payload.id,
             idSocket: socket.id,
@@ -49,7 +36,7 @@ class SocketsConfig {
         this.conductores.mostrarConductores();
       });
 
-      // -------------------------------------------------------------------
+      // --------------------------CONDUCTOR-----------------------------------
       socket.on('actualizar', (payload: {lat: string, lng: string}) => {
 
         this.conductores.updateLatLngBySocketId({
@@ -62,37 +49,68 @@ class SocketsConfig {
         this.conductores.mostrarConductores();
 
       });
+      
+      // ------------------------CONDUCTOR---------------------------------------
+      socket.on('respuesta del conductor', (payload: DetallePedido) => {
+        
+        console.log(`un conducto ${payload.pedido_aceptado} de este usuario`);
+        
+        
+        if (payload.pedido_aceptado){
+          this.conductores.updateStatus({
+            clientId: payload.cliente_id,
+            socketClientId: payload.socket_client_id,
+            socketId: socket.id,
+            status: 'OCUPADO'
+          });
+          const conductor = this.conductores.getConductorBySocketId(socket.id);
+          console.log(payload.socket_client_id);
+          
+          this.io.to(payload.socket_client_id).emit('pedido aceptado por conductor', conductor);
 
-      // -------------------------------------------------------------------
+          // TODO: Emitir un mensaje a todos los conductores que estan en espera con este usuario, que este pedido ya a sido tomado
+        }else{
+          this.conductores.setStatusDisponible(socket.id);
+          this.actualizarContador({socketId: payload.socket_client_id, contador: -1, isReset: false});
+        }
+
+      });
+
+      // --------------------------CONDUCTOR----------------------------------
+      // socket.on('aceptar pedido', (payload: {socket_client_id:string, client_id: string}) => {
+
+      //   this.conductores.updateStatus({socketId: socket.id, socketClientId: payload.socket_client_id, clientId: payload.client_id, status: 'OCUPADO'});
+      //   console.log(`El conductor ${socket.id} ha aceptado el pedido del cliente ${payload.socket_client_id}`);
+        
+      //   this.io.to(payload.socket_client_id).emit('pedido aceptado', {
+      //     // informacion del conductor
+      //   });
+
+
+
+      // });
+
+      // ---------------------CLIENTE--------------------------------
       socket.on('solicitar', (payload: DetallePedido) => {
 
         // el origen, destino, el [0] es la latitud y el [1] es la longitud
-        console.log(`El usuario ${socket.id} esta solicitando un pedido de ${payload.servicio} en ${payload.origen} hasta el ${payload.destino}`);
+        console.log(`El cliente ${socket.id} esta solicitando un pedido de ${payload.servicio} en ${payload.origen} hasta el ${payload.destino}`);
         
         payload.socket_client_id = socket.id;
         this.enviarSolicitud(socket, payload);
-     
-      });
       
-      // -------------------------------------------------------------------
-      socket.on('cancelar pedido', (payload: DetallePedido) => {
-
-        // el origen, destino, el [0] es la latitud y el [1] es la longitud
-        console.log(`El conductor ${socket.id} no ha aceptado el pedido, buscando otro conductor`);
-
-        this.conductores.nuevaCancelacion(socket.id, payload.socket_client_id);
-        this.enviarSolicitud(socket, payload);
-
       });
 
-      // -------------------------------------------------------------------
-      socket.on('aceptar pedido', (payload: {socket_client_id:string}) => {
+      // -----------------------------CLIENTE------------------------------
+      socket.on('cancelar pedido cliente', (payload: {cliente_id: string}) => {
 
-        this.conductores.updateStatusBusy({socketId: socket.id, socketClientId: payload.socket_client_id});
-        console.log(`El conductor ${socket.id} ha aceptado el pedido del cliente ${payload.socket_client_id}`);
+        console.log(`El cliente ${socket.id} ha cancelado el pedido`);
         
-        this.io.to(payload.socket_client_id).emit('pedido aceptado', {
-          // informacion del conductor
+        const conductores = this.conductores.getConductoresByClienteId(payload.cliente_id);
+
+        conductores.forEach(conductor => {
+          this.solicitudCancelada(conductor.socketId);
+          this.conductores.setStatusDisponible(conductor.socketId);
         });
 
       });
@@ -110,30 +128,58 @@ class SocketsConfig {
 
   }
 
+  private solicitudCancelada(socketId:string){
+    this.io.to(socketId).emit('solicitud cancelada', {});
+  }
 
+  private actualizarContador = (data: {socketId: string, contador: number, isReset: boolean}) => {
+    this.io.to(data.socketId).emit('actualizar contador', {
+      contador: data.contador,
+      isReset: data.isReset
+    });
+  }
 
   private enviarSolicitud = (socket: Socket, payload: DetallePedido) => {
 
+    const maxDriver: number = parseInt(process.env.MAX_DRIVER ?? '5');
+    var cantidadDisponible = 0;
 
-    const conductor = this.conductores.getConductorDistanciaCorta({lat: payload.origen[0], lng: payload.origen[1], socketClienteId: payload.socket_client_id});
-  
-    if (conductor.id === ''){
-      console.log('para el cliente. No hay conductores disponibles');
+    for (let i = 0; i < maxDriver; i++) {
+
+      const conductor = this.conductores.getConductorDistanciaCorta({lat: payload.origen[0], lng: payload.origen[1]});
+      this.conductores.updateStatus({
+        clientId: payload.cliente_id,
+        socketClientId: payload.socket_client_id,
+        socketId: conductor.socketId,
+        status: 'EN_ESPERA'
+      });
+
+      if (i===0 && conductor.id === ''){
+        console.log('para el cliente. No hay conductores disponibles');
+        
+        this.io.to(payload.socket_client_id).emit('respuesta solicitud usuario', {
+          'ok': false,
+          'msg' : 'No hay conductores disponibles',
+        });
+      }else if(conductor.id != ''){
+        cantidadDisponible = cantidadDisponible + 1;
+        console.log('Desde el cliente, solicitud enviada al conductor');
+        this.io.to(conductor.socketId).emit('solicitud pedido conductor', {
+          'ok': true,
+          'msg': 'Hay un nuevo cliente',
+          payload
+        });
       
-      this.io.to(payload.socket_client_id).emit('respuesta solicitud usuario', {
-        'ok': false,
-        'msg' : 'No hay conductores disponibles',
-      });
-    }else{
-  
-      console.log('Desde el cliente, solicitud enviada al conductor');
-      this.io.to(conductor.socketId).emit('solicitud pedido conductor', {
-        'ok': true,
-        'msg': 'Hay un nuevo cliente',
-        payload
-      });
-    
+      }else{
+        break;
+      }
+
+      
     }
+
+    this.actualizarContador({socketId: socket.id,contador: cantidadDisponible, isReset: true});
+
+
   
   }
 
