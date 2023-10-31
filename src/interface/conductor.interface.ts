@@ -1,7 +1,7 @@
 interface ConductorInterface{
   id: string,
-  lat: string,
-  lng: string,
+  lat: number,
+  lng: number,
   servicio: string,
 }
 

@@ -19,7 +19,7 @@ class Conductores{
     return this.conductores.find((conductor: ConductorModels) => conductor.socketId = socketId);
   }
 
-  public addConductor(data: {id:string, idSocket:string, lat:string, lng:string, servicio:string}){
+  public addConductor(data: {id:string, idSocket:string, lat:number, lng:number, servicio:string}){
     if (!this.existConductorById(data.id)){
       this.conductores.push(
         new ConductorModels(
@@ -28,7 +28,8 @@ class Conductores{
           data.lat,
           data.lng,
           data.servicio,
-          'DISPONIBLE'
+          'DISPONIBLE',
+          null
         )
       );
     }
@@ -40,7 +41,7 @@ class Conductores{
     }
   }
 
-  public updateLatLngBySocketId(data: {socketId: string, lat: string, lng: string}){
+  public updateLatLngBySocketId(data: {socketId: string, lat: number, lng: number}){
     if (this.existConductorBySocketId(data.socketId)){
       this.conductores = this.conductores.map((dataConductores: ConductorModels) => {
         if (dataConductores.socketId === data.socketId){
@@ -71,7 +72,7 @@ class Conductores{
 
   public getConductorDistanciaCorta = (data: {lat: number, lng: number}) : ConductorModels => {
 
-    var conductor: ConductorModels = new ConductorModels('','','','','','OCUPADO');
+    var conductor: ConductorModels = new ConductorModels('','',-1,-1,'','OCUPADO', null);
     var distancia = 9999999;
 
     this.conductores.forEach((dataConductores: ConductorModels) => {
@@ -80,8 +81,8 @@ class Conductores{
         const dis = calculateDistance({
           lat1: data.lat,
           lon1: data.lng,
-          lat2: parseFloat(dataConductores.lat),
-          lon2: parseFloat(dataConductores.lng)
+          lat2: dataConductores.lat,
+          lon2: dataConductores.lng
         });
         
         if (dis < distancia){
@@ -111,10 +112,7 @@ class Conductores{
       this.conductores = this.conductores.map((conductor: ConductorModels) => {
         if (conductor.socketId === socketId) {
           conductor.status = 'DISPONIBLE';
-          conductor.cliente = {
-            id: '0',
-            socketid: '0'
-          }
+          conductor.cliente = null
         };
         return conductor;
       });

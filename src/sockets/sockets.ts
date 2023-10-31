@@ -37,7 +37,7 @@ class SocketsConfig {
       });
 
       // --------------------------CONDUCTOR-----------------------------------
-      socket.on('actualizar', (payload: {lat: string, lng: string}) => {
+      socket.on('actualizar', (payload: {lat: number, lng: number}) => {
 
         this.conductores.updateLatLngBySocketId({
           socketId: socket.id,
@@ -45,6 +45,15 @@ class SocketsConfig {
           lng: payload.lng
         });
         
+        const conductor = this.conductores.getConductorBySocketId(socket.id);
+
+        if (conductor?.status === 'OCUPADO'){
+
+          if (conductor.cliente != null){
+            this.io.to(conductor.cliente?.socketid).emit('actualizar posicion conductor', payload);
+          }
+
+        }
         console.log('actualizar');
         this.conductores.mostrarConductores();
 
@@ -57,6 +66,7 @@ class SocketsConfig {
         
         
         if (payload.pedido_aceptado){
+
           this.conductores.updateStatus({
             clientId: payload.cliente_id,
             socketClientId: payload.socket_client_id,
@@ -75,20 +85,6 @@ class SocketsConfig {
         }
 
       });
-
-      // --------------------------CONDUCTOR----------------------------------
-      // socket.on('aceptar pedido', (payload: {socket_client_id:string, client_id: string}) => {
-
-      //   this.conductores.updateStatus({socketId: socket.id, socketClientId: payload.socket_client_id, clientId: payload.client_id, status: 'OCUPADO'});
-      //   console.log(`El conductor ${socket.id} ha aceptado el pedido del cliente ${payload.socket_client_id}`);
-        
-      //   this.io.to(payload.socket_client_id).emit('pedido aceptado', {
-      //     // informacion del conductor
-      //   });
-
-
-
-      // });
 
       // ---------------------CLIENTE--------------------------------
       socket.on('solicitar', (payload: DetallePedido) => {

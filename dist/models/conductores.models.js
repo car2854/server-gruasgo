@@ -9,15 +9,15 @@ class Conductores {
     constructor() {
         this.conductores = [];
         this.getConductorDistanciaCorta = (data) => {
-            var conductor = new conductor_models_1.default('', '', '', '', '', 'OCUPADO');
+            var conductor = new conductor_models_1.default('', '', -1, -1, '', 'OCUPADO', null);
             var distancia = 9999999;
             this.conductores.forEach((dataConductores) => {
                 if ((dataConductores.status === 'DISPONIBLE')) {
                     const dis = (0, calculateDistance_1.calculateDistance)({
                         lat1: data.lat,
                         lon1: data.lng,
-                        lat2: parseFloat(dataConductores.lat),
-                        lon2: parseFloat(dataConductores.lng)
+                        lat2: dataConductores.lat,
+                        lon2: dataConductores.lng
                     });
                     if (dis < distancia) {
                         distancia = dis;
@@ -33,10 +33,7 @@ class Conductores {
                 this.conductores = this.conductores.map((conductor) => {
                     if (conductor.socketId === socketId) {
                         conductor.status = 'DISPONIBLE';
-                        conductor.cliente = {
-                            id: '0',
-                            socketid: '0'
-                        };
+                        conductor.cliente = null;
                     }
                     ;
                     return conductor;
@@ -55,7 +52,7 @@ class Conductores {
     }
     addConductor(data) {
         if (!this.existConductorById(data.id)) {
-            this.conductores.push(new conductor_models_1.default(data.id, data.idSocket, data.lat, data.lng, data.servicio, 'DISPONIBLE'));
+            this.conductores.push(new conductor_models_1.default(data.id, data.idSocket, data.lat, data.lng, data.servicio, 'DISPONIBLE', null));
         }
     }
     removeConductor(id) {
