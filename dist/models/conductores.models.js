@@ -71,6 +71,17 @@ class Conductores {
             });
         }
     }
+    clearStatusBySocketId(socketId) {
+        if (this.existConductorBySocketId(socketId)) {
+            this.conductores = this.conductores.map((conductor) => {
+                if (conductor.socketId === socketId) {
+                    conductor.status = 'DISPONIBLE';
+                    conductor.cliente = null;
+                }
+                return conductor;
+            });
+        }
+    }
     updateStatus(data) {
         if (this.existConductorBySocketId(data.socketId)) {
             this.conductores = this.conductores.map((dataConductor) => {

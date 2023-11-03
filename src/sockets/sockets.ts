@@ -60,13 +60,35 @@ class SocketsConfig {
       });
       
       // ------------------------CONDUCTOR---------------------------------------
+
+      socket.on('pedido proceso cancelado conductor', (payload: DetallePedido) => {
+
+        this.conductores.clearStatusBySocketId(socket.id);
+        console.log(`pedido en proceso cancelado por el conductor ${socket.id}`);
+        
+        this.io.to(payload.socket_client_id).emit('pedido en proceso cancelado');
+
+      });
+
+      // ------------------------CONDUCTOR---------------------------------------
       socket.on('respuesta del conductor', (payload: DetallePedido) => {
         
         console.log(`un conducto ${payload.pedido_aceptado} de este usuario`);
         
         
         if (payload.pedido_aceptado){
-
+          // Obtener todos los conductores que tienen al cliente en espera, o esta ocupado
+          const conductores = this.conductores.getConductoresByClienteId(payload.socket_client_id);
+          
+          // Primero verifica si hay un conductor que ya a tomado este pedido
+          // Esto lo hago, ya que la conexion a internet puede variar, y puede existir alguien que le dio el boton y todavia este procesando, entonces
+          // si el otro tiene mejor conexion para evitar un choque de dos conductores al mismo cliente, se notifica que este pedido ya a sido tomado por otro
+          // conductor
+          if (conductores.some((conductor: ConductorModels) => conductor.status === 'OCUPADO')){
+            socket.emit('pedido ya tomado');
+            return;
+          }
+          
           this.conductores.updateStatus({
             clientId: payload.cliente_id,
             socketClientId: payload.socket_client_id,
@@ -77,8 +99,16 @@ class SocketsConfig {
           console.log(payload.socket_client_id);
           
           this.io.to(payload.socket_client_id).emit('pedido aceptado por conductor', conductor);
-
+          
           // TODO: Emitir un mensaje a todos los conductores que estan en espera con este usuario, que este pedido ya a sido tomado
+          conductores.forEach((conductor: ConductorModels) => {
+            if (conductor.status === 'EN_ESPERA' && conductor.socketId != socket.id){
+              this.conductores.clearStatusBySocketId(conductor.socketId);
+              this.io.to(conductor.socketId).emit('pedido ya tomado');
+            }
+          });
+
+
         }else{
           this.conductores.setStatusDisponible(socket.id);
           this.actualizarContador({socketId: payload.socket_client_id, contador: -1, isReset: false});

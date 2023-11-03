@@ -8,6 +8,7 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const map_router_1 = __importDefault(require("../routers/map.router"));
 const sockets_1 = __importDefault(require("../sockets/sockets"));
+const cors_1 = __importDefault(require("cors"));
 class ServerConnection {
     constructor() {
         this.router = () => {
@@ -25,6 +26,9 @@ class ServerConnection {
             });
         };
         this.app = (0, express_1.default)();
+        this.app.use((0, cors_1.default)({
+            origin: '*'
+        }));
         this.server = http_1.default.createServer(this.app);
         this.io = new socket_io_1.Server(this.server);
         this.socket = new sockets_1.default(this.io);

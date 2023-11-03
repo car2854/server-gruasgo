@@ -4,6 +4,8 @@ import { Server } from 'socket.io';
 import routerMap from '../routers/map.router';
 import SocketsConfig from '../sockets/sockets';
 
+import cors from 'cors';
+
 class ServerConnection {
 
   private app: Express;
@@ -13,6 +15,11 @@ class ServerConnection {
 
   constructor(){
     this.app = express();
+    
+    this.app.use(cors({
+      origin: '*'
+    }));
+
     this.server = http.createServer(this.app);
     this.io = new Server(this.server);
 

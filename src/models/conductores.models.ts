@@ -35,6 +35,8 @@ class Conductores{
     }
   }
 
+
+
   public removeConductor(id:string){
     if (this.existConductorById(id)){
       this.conductores = this.conductores.filter((resp:any) => resp.id != id).map((_) => _);
@@ -49,6 +51,18 @@ class Conductores{
           dataConductores.lng = data.lng;
         }
         return dataConductores;
+      });
+    }
+  }
+
+  public clearStatusBySocketId(socketId: string){
+    if (this.existConductorBySocketId(socketId)){
+      this.conductores = this.conductores.map((conductor: ConductorModels) => {
+        if (conductor.socketId === socketId){
+          conductor.status = 'DISPONIBLE';
+          conductor.cliente = null;
+        }
+        return conductor;
       });
     }
   }
