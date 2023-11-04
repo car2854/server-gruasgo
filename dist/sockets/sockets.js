@@ -88,6 +88,14 @@ class SocketsConfig {
                 console.log(`pedido en proceso cancelado por el conductor ${socket.id}`);
                 this.io.to(payload.socket_client_id).emit('pedido en proceso cancelado');
             });
+            // ---------------------CONDUCTOR--------------------------------
+            socket.on('finalizar viaje', (payload) => {
+                var _a;
+                const conductor = this.conductores.getConductorBySocketId(socket.id);
+                if ((conductor === null || conductor === void 0 ? void 0 : conductor.status) === 'OCUPADO' && ((_a = conductor.cliente) === null || _a === void 0 ? void 0 : _a.id) === payload.cliente_id) {
+                    // this.io.to(payload.cliente.)
+                }
+            });
             // ------------------------CONDUCTOR---------------------------------------
             socket.on('respuesta del conductor', (payload) => {
                 console.log(`un conducto ${payload.pedido_aceptado} de este usuario`);

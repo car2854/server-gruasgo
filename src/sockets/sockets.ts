@@ -70,6 +70,20 @@ class SocketsConfig {
 
       });
 
+      
+      // ---------------------CONDUCTOR--------------------------------
+      socket.on('finalizar viaje', (payload: DetallePedido) => {
+
+        const conductor = this.conductores.getConductorBySocketId(socket.id);
+
+        if (conductor?.status === 'OCUPADO' && conductor.cliente?.id === payload.cliente_id){
+
+          // this.io.to(payload.cliente.)
+
+        }
+
+      });
+
       // ------------------------CONDUCTOR---------------------------------------
       socket.on('respuesta del conductor', (payload: DetallePedido) => {
         
