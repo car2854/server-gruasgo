@@ -10,5 +10,6 @@ export interface DetallePedido {
   referencia: number,
   monto: number,
   socket_client_id: string,
-  pedido_aceptado? :boolean
+  pedido_aceptado? :boolean,
+  pedido_id: string
 }

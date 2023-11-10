@@ -89,7 +89,8 @@ class Conductores {
                     dataConductor.status = data.status;
                     dataConductor.cliente = {
                         id: data.clientId,
-                        socketid: data.socketClientId
+                        socketid: data.socketClientId,
+                        pedidoId: data.pedidoId
                     };
                 }
                 ;

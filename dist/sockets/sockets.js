@@ -14,36 +14,29 @@ class SocketsConfig {
             });
         };
         this.enviarSolicitud = (socket, payload) => {
-            var _a;
-            const maxDriver = parseInt((_a = process.env.MAX_DRIVER) !== null && _a !== void 0 ? _a : '5');
             var cantidadDisponible = 0;
-            for (let i = 0; i < maxDriver; i++) {
-                const conductor = this.conductores.getConductorDistanciaCorta({ lat: payload.origen[0], lng: payload.origen[1] });
-                this.conductores.updateStatus({
-                    clientId: payload.cliente_id,
-                    socketClientId: payload.socket_client_id,
-                    socketId: conductor.socketId,
-                    status: 'EN_ESPERA'
+            const conductor = this.conductores.getConductorDistanciaCorta({ lat: payload.origen[0], lng: payload.origen[1] });
+            this.conductores.updateStatus({
+                clientId: payload.cliente_id,
+                socketClientId: payload.socket_client_id,
+                socketId: conductor.socketId,
+                status: 'EN_ESPERA',
+                pedidoId: payload.pedido_id
+            });
+            if (conductor.id === '') {
+                console.log('para el cliente. No hay conductores disponibles');
+                this.io.to(payload.socket_client_id).emit('respuesta solicitud usuario', {
+                    'ok': false,
+                    'msg': 'No hay conductores disponibles',
                 });
-                if (i === 0 && conductor.id === '') {
-                    console.log('para el cliente. No hay conductores disponibles');
-                    this.io.to(payload.socket_client_id).emit('respuesta solicitud usuario', {
-                        'ok': false,
-                        'msg': 'No hay conductores disponibles',
-                    });
-                }
-                else if (conductor.id != '') {
-                    cantidadDisponible = cantidadDisponible + 1;
-                    console.log('Desde el cliente, solicitud enviada al conductor');
-                    this.io.to(conductor.socketId).emit('solicitud pedido conductor', {
-                        'ok': true,
-                        'msg': 'Hay un nuevo cliente',
-                        payload
-                    });
-                }
-                else {
-                    break;
-                }
+            }
+            else {
+                console.log('Desde el cliente, solicitud enviada al conductor');
+                this.io.to(conductor.socketId).emit('notificacion pedido conductor', {
+                    'ok': true,
+                    'msg': 'Hay un nuevo cliente',
+                    payload
+                });
             }
             this.actualizarContador({ socketId: socket.id, contador: cantidadDisponible, isReset: true });
         };
@@ -114,7 +107,8 @@ class SocketsConfig {
                         clientId: payload.cliente_id,
                         socketClientId: payload.socket_client_id,
                         socketId: socket.id,
-                        status: 'OCUPADO'
+                        status: 'OCUPADO',
+                        pedidoId: payload.pedido_id
                     });
                     const conductor = this.conductores.getConductorBySocketId(socket.id);
                     console.log(payload.socket_client_id);

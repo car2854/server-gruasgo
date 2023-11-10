@@ -9,7 +9,8 @@ class ConductorModels{
     public status: 'DISPONIBLE' | 'OCUPADO' | 'EN_ESPERA',
     public cliente: {
       id: string,
-      socketid: string
+      socketid: string,
+      pedidoId: string
     } | null
   ){}
 

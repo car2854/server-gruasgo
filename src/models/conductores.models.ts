@@ -67,7 +67,7 @@ class Conductores{
     }
   }
 
-  public updateStatus(data: {socketId:string, socketClientId: string, clientId: string, status: 'OCUPADO' | 'EN_ESPERA'}){
+  public updateStatus(data: {socketId:string, socketClientId: string, clientId: string, status: 'OCUPADO' | 'EN_ESPERA', pedidoId: string}){
 
     if (this.existConductorBySocketId(data.socketId)){
       this.conductores = this.conductores.map((dataConductor: ConductorModels) => {
@@ -75,7 +75,8 @@ class Conductores{
           dataConductor.status = data.status;
           dataConductor.cliente = {
             id: data.clientId,
-            socketid: data.socketClientId
+            socketid: data.socketClientId,
+            pedidoId: data.pedidoId
           }
         };
         return dataConductor;
