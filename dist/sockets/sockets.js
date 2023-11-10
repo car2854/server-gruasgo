@@ -130,6 +130,7 @@ class SocketsConfig {
             socket.on('solicitar', (payload) => {
                 // el origen, destino, el [0] es la latitud y el [1] es la longitud
                 console.log(`El cliente ${socket.id} esta solicitando un pedido de ${payload.servicio} en ${payload.origen} hasta el ${payload.destino}`);
+                console.log(payload);
                 payload.socket_client_id = socket.id;
                 this.enviarSolicitud(socket, payload);
             });
