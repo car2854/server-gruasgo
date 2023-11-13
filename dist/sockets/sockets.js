@@ -1,9 +1,19 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const conductores_models_1 = __importDefault(require("../models/conductores.models"));
+const axios_1 = __importDefault(require("axios"));
 class SocketsConfig {
     constructor(io) {
         this.conductores = new conductores_models_1.default();
@@ -126,14 +136,31 @@ class SocketsConfig {
                     this.actualizarContador({ socketId: payload.socket_client_id, contador: -1, isReset: false });
                 }
             });
+            // ---------------------CONDUCTOR------------------------------
+            socket.on('ya estoy aqui', (payload) => {
+                console.log('Ya estoy aqui');
+                console.log(payload);
+                this.io.to(payload.socket_client_id).emit('El conductor ya esta aqui');
+            });
+            // ---------------------CONDUCTOR-----------------------------
+            socket.on('finalizar pedido', (payload) => {
+                this.io.to(payload.socket_client_id).emit('pedido finalizado');
+            });
             // ---------------------CLIENTE--------------------------------
-            socket.on('solicitar', (payload) => {
+            socket.on('solicitar', (payload) => __awaiter(this, void 0, void 0, function* () {
+                const url = `${process.env.URL}/conductorDisponible.php`;
+                const formData = new FormData();
+                formData.append('btip', 'BUES');
+                const resp = yield axios_1.default.post(url, formData);
+                // 'btip': 'BUES'
+                console.log('Cantidad de conductores');
+                console.log(resp.data);
                 // el origen, destino, el [0] es la latitud y el [1] es la longitud
                 console.log(`El cliente ${socket.id} esta solicitando un pedido de ${payload.servicio} en ${payload.origen} hasta el ${payload.destino}`);
                 console.log(payload);
                 payload.socket_client_id = socket.id;
                 this.enviarSolicitud(socket, payload);
-            });
+            }));
             // -----------------------------CLIENTE------------------------------
             socket.on('cancelar pedido cliente', (payload) => {
                 console.log(`El cliente ${socket.id} ha cancelado el pedido`);

@@ -3,6 +3,7 @@ import ConductorInterface from '../interface/conductor.interface';
 import Conductores from '../models/conductores.models';
 import { DetallePedido } from '../interface/detalle_pedido.interface';
 import ConductorModels from '../models/conductor.models';
+import axios from 'axios';
 
 class SocketsConfig {
 
@@ -131,12 +132,45 @@ class SocketsConfig {
 
       });
 
+      // ---------------------CONDUCTOR------------------------------
+
+      socket.on('ya estoy aqui', (payload: DetallePedido) => {
+
+        console.log('Ya estoy aqui');
+        console.log(payload);
+
+        this.io.to(payload.socket_client_id).emit('El conductor ya esta aqui');
+        
+      });
+
+      // ---------------------CONDUCTOR-----------------------------
+
+      socket.on('finalizar pedido', (payload: DetallePedido) => {
+
+        this.io.to(payload.socket_client_id).emit('pedido finalizado');
+
+      });
+
       // ---------------------CLIENTE--------------------------------
-      socket.on('solicitar', (payload: DetallePedido) => {
+      socket.on('solicitar', async (payload: DetallePedido) => {
+        
+        const url = `${process.env.URL}/conductorDisponible.php`;
+
+        const formData = new FormData();
+        formData.append('btip', 'BUES');
+        const resp = await axios.post(url, formData);
+
+          // 'btip': 'BUES'
+        console.log('Cantidad de conductores');
+        
+        console.log(resp.data);
+        
+
+        
 
         // el origen, destino, el [0] es la latitud y el [1] es la longitud
         console.log(`El cliente ${socket.id} esta solicitando un pedido de ${payload.servicio} en ${payload.origen} hasta el ${payload.destino}`);
-        
+         
         console.log(payload);
         payload.socket_client_id = socket.id;
         this.enviarSolicitud(socket, payload);
