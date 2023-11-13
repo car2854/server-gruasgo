@@ -13,9 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const conductores_models_1 = __importDefault(require("../models/conductores.models"));
-const axios_1 = __importDefault(require("axios"));
+const conductores_models_aux_1 = require("../models/conductores.models.aux");
 class SocketsConfig {
     constructor(io) {
+        // TODO: Nuevo
+        this.conductoresNuevo = new conductores_models_aux_1.Conductors();
+        // TODO: Antiguo
         this.conductores = new conductores_models_1.default();
         this.actualizarContador = (data) => {
             this.io.to(data.socketId).emit('actualizar contador', {
@@ -58,6 +61,17 @@ class SocketsConfig {
             console.log(`El cliente ${socket.id} se ha conectado`);
             // -----------------------CONDUCTOR--------------------------------------------
             socket.on('conductor online', (payload) => {
+                // TODO: Nuevo
+                this.conductoresNuevo.agregarNuevoConductor({
+                    id: payload.id,
+                    socket: socket.id,
+                    lat: payload.lat,
+                    lng: payload.lng,
+                    servicio: payload.servicio,
+                    estado: 'libre'
+                });
+                // this.conductoresNuevo.mostrarConductores();
+                // TODO: Antiguo
                 this.conductores.addConductor({
                     id: payload.id,
                     idSocket: socket.id,
@@ -69,8 +83,15 @@ class SocketsConfig {
                 this.conductores.mostrarConductores();
             });
             // --------------------------CONDUCTOR-----------------------------------
-            socket.on('actualizar', (payload) => {
+            socket.on('actualizar coordenadas conductor', (payload) => {
+                // TODO: Nuevo, falta enviar el id en el socket
+                // this.conductoresNuevo.actualizarCoordenadas({
+                //   idConductor: 
+                //   lat: payload.lat,
+                //   lng: payload.lng
+                // })
                 var _a;
+                // TODO: Antiguo
                 this.conductores.updateLatLngBySocketId({
                     socketId: socket.id,
                     lat: payload.lat,
@@ -87,13 +108,17 @@ class SocketsConfig {
             });
             // ------------------------CONDUCTOR---------------------------------------
             socket.on('pedido proceso cancelado conductor', (payload) => {
+                // TODO: Nuevo
+                // TODO: Antiguo
                 this.conductores.clearStatusBySocketId(socket.id);
                 console.log(`pedido en proceso cancelado por el conductor ${socket.id}`);
                 this.io.to(payload.socket_client_id).emit('pedido en proceso cancelado');
             });
             // ---------------------CONDUCTOR--------------------------------
             socket.on('finalizar viaje', (payload) => {
+                // TODO: Nuevo
                 var _a;
+                // TODO: Antiguo
                 const conductor = this.conductores.getConductorBySocketId(socket.id);
                 if ((conductor === null || conductor === void 0 ? void 0 : conductor.status) === 'OCUPADO' && ((_a = conductor.cliente) === null || _a === void 0 ? void 0 : _a.id) === payload.cliente_id) {
                     // this.io.to(payload.cliente.)
@@ -148,13 +173,13 @@ class SocketsConfig {
             });
             // ---------------------CLIENTE--------------------------------
             socket.on('solicitar', (payload) => __awaiter(this, void 0, void 0, function* () {
-                const url = `${process.env.URL}/conductorDisponible.php`;
-                const formData = new FormData();
-                formData.append('btip', 'BUES');
-                const resp = yield axios_1.default.post(url, formData);
-                // 'btip': 'BUES'
-                console.log('Cantidad de conductores');
-                console.log(resp.data);
+                // const url = `${process.env.URL}/conductorDisponible.php`;
+                // const formData = new FormData();
+                // formData.append('btip', 'BUES');
+                // const resp = await axios.post(url, formData);
+                //   // 'btip': 'BUES'
+                // console.log('Cantidad de conductores');
+                // console.log(resp.data);
                 // el origen, destino, el [0] es la latitud y el [1] es la longitud
                 console.log(`El cliente ${socket.id} esta solicitando un pedido de ${payload.servicio} en ${payload.origen} hasta el ${payload.destino}`);
                 console.log(payload);

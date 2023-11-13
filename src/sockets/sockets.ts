@@ -4,9 +4,14 @@ import Conductores from '../models/conductores.models';
 import { DetallePedido } from '../interface/detalle_pedido.interface';
 import ConductorModels from '../models/conductor.models';
 import axios from 'axios';
+import { Conductors } from '../models/conductores.models.aux';
 
 class SocketsConfig {
 
+  // TODO: Nuevo
+  private conductoresNuevo = new Conductors();
+
+  // TODO: Antiguo
   private conductores = new Conductores();
 
   private io: Server;
@@ -24,6 +29,21 @@ class SocketsConfig {
       
       // -----------------------CONDUCTOR--------------------------------------------
       socket.on('conductor online', (payload: ConductorInterface) => {
+
+        // TODO: Nuevo
+        this.conductoresNuevo.agregarNuevoConductor(
+          {
+            id: payload.id,
+            socket: socket.id,
+            lat: payload.lat,
+            lng: payload.lng,
+            servicio: payload.servicio,
+            estado: 'libre'
+          }
+        );
+        // this.conductoresNuevo.mostrarConductores();
+
+        // TODO: Antiguo
         this.conductores.addConductor({
             id: payload.id,
             idSocket: socket.id,
@@ -38,8 +58,17 @@ class SocketsConfig {
       });
 
       // --------------------------CONDUCTOR-----------------------------------
-      socket.on('actualizar', (payload: {lat: number, lng: number}) => {
+      socket.on('actualizar coordenadas conductor', (payload: {lat: number, lng: number}) => {
 
+        // TODO: Nuevo, falta enviar el id en el socket
+        // this.conductoresNuevo.actualizarCoordenadas({
+        //   idConductor: 
+        //   lat: payload.lat,
+        //   lng: payload.lng
+        // })
+
+
+        // TODO: Antiguo
         this.conductores.updateLatLngBySocketId({
           socketId: socket.id,
           lat: payload.lat,
@@ -64,6 +93,10 @@ class SocketsConfig {
 
       socket.on('pedido proceso cancelado conductor', (payload: DetallePedido) => {
 
+        // TODO: Nuevo
+
+
+        // TODO: Antiguo
         this.conductores.clearStatusBySocketId(socket.id);
         console.log(`pedido en proceso cancelado por el conductor ${socket.id}`);
         
@@ -74,7 +107,10 @@ class SocketsConfig {
       
       // ---------------------CONDUCTOR--------------------------------
       socket.on('finalizar viaje', (payload: DetallePedido) => {
+        
+        // TODO: Nuevo
 
+        // TODO: Antiguo
         const conductor = this.conductores.getConductorBySocketId(socket.id);
 
         if (conductor?.status === 'OCUPADO' && conductor.cliente?.id === payload.cliente_id){
@@ -154,16 +190,16 @@ class SocketsConfig {
       // ---------------------CLIENTE--------------------------------
       socket.on('solicitar', async (payload: DetallePedido) => {
         
-        const url = `${process.env.URL}/conductorDisponible.php`;
+        // const url = `${process.env.URL}/conductorDisponible.php`;
 
-        const formData = new FormData();
-        formData.append('btip', 'BUES');
-        const resp = await axios.post(url, formData);
+        // const formData = new FormData();
+        // formData.append('btip', 'BUES');
+        // const resp = await axios.post(url, formData);
 
-          // 'btip': 'BUES'
-        console.log('Cantidad de conductores');
+        //   // 'btip': 'BUES'
+        // console.log('Cantidad de conductores');
         
-        console.log(resp.data);
+        // console.log(resp.data);
         
 
         
