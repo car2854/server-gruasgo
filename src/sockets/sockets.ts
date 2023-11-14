@@ -190,14 +190,20 @@ class SocketsConfig {
       // ---------------------CLIENTE--------------------------------
       socket.on('solicitar', async (payload: DetallePedido) => {
         
+        
         // const url = `${process.env.URL}/conductorDisponible.php`;
 
         // const formData = new FormData();
         // formData.append('btip', 'BUES');
-        // const resp = await axios.post(url, formData);
+        // formData.append('bestado', 'ES');
+        // const resp = await axios.post(url, formData, {
+        //   headers: {
+
+        //   }
+        // });
 
         //   // 'btip': 'BUES'
-        // console.log('Cantidad de conductores');
+        // console.log('Cantidad de conductores====================================');
         
         // console.log(resp.data);
         

@@ -176,9 +176,13 @@ class SocketsConfig {
                 // const url = `${process.env.URL}/conductorDisponible.php`;
                 // const formData = new FormData();
                 // formData.append('btip', 'BUES');
-                // const resp = await axios.post(url, formData);
+                // formData.append('bestado', 'ES');
+                // const resp = await axios.post(url, formData, {
+                //   headers: {
+                //   }
+                // });
                 //   // 'btip': 'BUES'
-                // console.log('Cantidad de conductores');
+                // console.log('Cantidad de conductores====================================');
                 // console.log(resp.data);
                 // el origen, destino, el [0] es la latitud y el [1] es la longitud
                 console.log(`El cliente ${socket.id} esta solicitando un pedido de ${payload.servicio} en ${payload.origen} hasta el ${payload.destino}`);
