@@ -4,7 +4,6 @@ import Conductores from '../models/conductores.models';
 import { DetallePedido } from '../interface/detalle_pedido.interface';
 import ConductorModels from '../models/conductor.models';
 import axios from 'axios';
-import { Conductors } from '../models/conductores.models.aux';
 import { PedidoModel, UsuarioModel } from '../models/clases.models.aux';
 import { getDistanciaHelpers } from '../helpers/get_distancia.helper';
 import { actualizarBanderaConductor, getConductoresDisponibles } from '../services/http.services';
