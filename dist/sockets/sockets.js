@@ -162,6 +162,16 @@ class SocketsConfig {
                     console.log('El cliente esta desconectado');
                 }
             });
+            socket.on('comenzar carrera', (payload) => {
+                const cliente = this.getUsuarioById(payload.idCliente);
+                console.log('El condfuctor ncomenzar carrera ' + payload.idCliente);
+                if (cliente) {
+                    this.io.to(cliente.socket).emit('El conductor comenzo carrera');
+                }
+                else {
+                    console.log('El cliente esta desconectado');
+                }
+            });
             // ---------------------CONDUCTOR-----------------------------
             socket.on('finalizar pedido', (payload) => {
                 const cliente = this.getUsuarioById(payload.idCliente);

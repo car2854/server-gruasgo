@@ -100,7 +100,7 @@ class SocketsConfig {
       });
 
       // --------------------------CONDUCTOR-----------------------------------
-      socket.on('actualizar coordenadas conductor', (payload: {lat: number, lng: number, idPedido: string}) => {
+      socket.on('actualizar coordenadas conductor', (payload: {lat: number, lng: number, rotation:any, idPedido: string}) => {
 
         
         const pedido = this.getPedidoByIdPedido(payload.idPedido);
@@ -239,6 +239,20 @@ class SocketsConfig {
         const cliente = this.getUsuarioById(payload.idCliente);
         if (cliente){
           this.io.to(cliente.socket).emit('El conductor ya esta aqui');
+        }else{
+          console.log('El cliente esta desconectado');
+          
+        }
+        
+      });
+
+      socket.on('comenzar carrera', (payload: {idCliente:string}) => {
+
+        const cliente = this.getUsuarioById(payload.idCliente);
+        console.log('El condfuctor ncomenzar carrera '+payload.idCliente);
+        
+        if (cliente){
+          this.io.to(cliente.socket).emit('El conductor comenzo carrera');
         }else{
           console.log('El cliente esta desconectado');
           
