@@ -30,8 +30,6 @@ class MapController {
                 const direccion = resp.data.results[0].formatted_address;
                 const componentes = resp.data.results[0].address_components;
                 var lugar = '';
-                console.log('--------------------------------');
-                console.log(componentes);
                 componentes.forEach((componente) => {
                     if (componente.types.includes('route') || componente.types.includes('sublocality')) {
                         if (lugar.length === 0) {

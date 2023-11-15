@@ -9,11 +9,13 @@ export class Conductors{
   private getConductorById = (id: string) => this.conductores.find((conductor: ConductorModel) => conductor.id === id);
   private getPedidoByIdPedido = (idPedido: string) => this.pedidos.find((pedido: PedidoModel) => pedido.idPedido === idPedido);
 
-
+  public eliminarUsuarioById = (socket: string) => {
+    this.conductores = this.conductores.filter((usuario: ConductorModel) => usuario.socket != socket).map((_) => _);
+  }
+  
   public agregarNuevoConductor = (conductor: ConductorModel) => {
     if (this.getConductorById(conductor.id) == null){
       const existe = this.pedidos.some((pedido: PedidoModel) => pedido.idConductorAceptado === conductor.id);
-      if (existe) conductor.estado = 'ocupado';
       this.conductores.push(conductor);
     }
   }
@@ -56,14 +58,6 @@ export class Conductors{
     const pedido = this.getPedidoByIdPedido(idPedido);
     if (pedido) {
       this.pedidos = this.pedidos.filter((data) => data !== pedido);
-    }
-  }
-
-  public actualizarCoordenadas = (data: {idConductor: string, lat: number, lng: number}) => {
-    const conductor = this.getConductorById(data.idConductor);
-    if (conductor){
-      conductor!.lat = data.lat;
-      conductor!.lng = data.lng;
     }
   }
 

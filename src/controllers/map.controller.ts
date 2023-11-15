@@ -25,10 +25,7 @@ export default class MapController{
       const componentes = resp.data.results[0].address_components;
 
       var lugar = '';
-      console.log('--------------------------------');
-      
-      console.log(componentes);
-      
+
       componentes.forEach((componente:any) => {
         if (componente.types.includes('route') || componente.types.includes('sublocality')) {
           if (lugar.length === 0){

@@ -1,22 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PedidoModel = exports.ConductorModel = void 0;
-class ConductorModel {
-    constructor(id, socket, lat, lng, estado, servicio) {
+exports.PedidoModel = exports.UsuarioModel = void 0;
+class UsuarioModel {
+    constructor(id, socket) {
         this.id = id;
         this.socket = socket;
-        this.lat = lat;
-        this.lng = lng;
-        this.estado = estado;
-        this.servicio = servicio;
     }
 }
-exports.ConductorModel = ConductorModel;
+exports.UsuarioModel = UsuarioModel;
 class PedidoModel {
-    constructor(idPedido, socket, idConductorAceptado, idConductoresRechazados) {
+    constructor(idPedido, idCliente, idConductorAceptado, idConductorSolicitud, idConductoresRechazados) {
         this.idPedido = idPedido;
-        this.socket = socket;
+        this.idCliente = idCliente;
         this.idConductorAceptado = idConductorAceptado;
+        this.idConductorSolicitud = idConductorSolicitud;
         this.idConductoresRechazados = idConductoresRechazados;
     }
 }

@@ -5,14 +5,16 @@ import { DetallePedido } from '../interface/detalle_pedido.interface';
 import ConductorModels from '../models/conductor.models';
 import axios from 'axios';
 import { Conductors } from '../models/conductores.models.aux';
+import { PedidoModel, UsuarioModel } from '../models/clases.models.aux';
+import { getDistanciaHelpers } from '../helpers/get_distancia.helper';
+import { actualizarBanderaConductor, getConductoresDisponibles } from '../services/http.services';
+import { getIdConductorCercano } from '../helpers/get_id_conductor_cercano';
+import { getConductorNoRechazado } from '../helpers/get_conductor_no_rechazado.helper';
 
 class SocketsConfig {
 
-  // TODO: Nuevo
-  private conductoresNuevo = new Conductors();
-
-  // TODO: Antiguo
-  private conductores = new Conductores();
+  private usuarios : UsuarioModel[] = [];
+  private pedidos: PedidoModel[] = [];
 
   private io: Server;
 
@@ -21,6 +23,46 @@ class SocketsConfig {
 
     this.connection();
   }
+  
+
+  // usuario
+  private getUsuarioById = (id: string) => this.usuarios.find((usuario) => usuario.id === id);
+  private getUsuarioBySocket = (socket: string) => this.usuarios.find((usuario) => usuario.socket === socket);
+
+  private eliminarUsuarioBySocket = (socket: string) => {
+    this.usuarios = this.usuarios.filter(usuario => usuario.socket != socket).map(_ => _);
+  }
+
+  private agregarNuevoUsuario = (nuevoUsuario: UsuarioModel) => {
+    const usuario = this.getUsuarioById(nuevoUsuario.id);
+    if (usuario==null) this.usuarios.push(nuevoUsuario);
+  }
+
+  // Pedido
+  private getPedidoByIdPedido = (idPedido: string) => this.pedidos.find((pedido) => pedido.idPedido === idPedido);
+  private getPedidoByIdCliente = (idCliente: string) => this.pedidos.find((pedido) => pedido.idCliente === idCliente);
+
+  private agregarNuevoPedido = (nuevoPedido: PedidoModel) => {
+    const pedido = this.getPedidoByIdPedido(nuevoPedido.idPedido);
+    if (pedido==null) this.pedidos.push(nuevoPedido);
+  }
+
+  private eliminarPedidoByIdPedido = (idPedido:string) => {
+    this.pedidos = this.pedidos.filter(pedido => pedido.idPedido != idPedido).map(_ => _);
+  }
+
+  private nuevoRechazoPedido = (idConductor: string, idPedido: string) => {
+
+    const pedido = this.getPedidoByIdPedido(idPedido);
+    const existe = pedido?.idConductoresRechazados.some((data) => data === idConductor);
+    if (!existe){
+      pedido?.idConductoresRechazados.push(idConductor);
+    }
+
+  }
+
+
+
 
   private connection(){
 
@@ -28,273 +70,307 @@ class SocketsConfig {
       console.log(`El cliente ${socket.id} se ha conectado`);
       
       // -----------------------CONDUCTOR--------------------------------------------
-      socket.on('conductor online', (payload: ConductorInterface) => {
+      socket.on('usuario online', async (payload: {id:string, servicio?: string}) => {
+        
+        
+        this.agregarNuevoUsuario(new UsuarioModel( payload.id, socket.id ));
 
-        // TODO: Nuevo
-        this.conductoresNuevo.agregarNuevoConductor(
-          {
-            id: payload.id,
-            socket: socket.id,
-            lat: payload.lat,
-            lng: payload.lng,
+        console.log('usuarios online');
+        
+        this.usuarios.forEach(element => {
+          console.log(element);
+        });
+        
+        console.log(payload.servicio);
+        
+        if (payload.servicio != null){
+          const status = await actualizarBanderaConductor({
+            bandera: '0',
+            estado: 'ES',
             servicio: payload.servicio,
-            estado: 'libre'
-          }
-        );
-        // this.conductoresNuevo.mostrarConductores();
-
-        // TODO: Antiguo
-        this.conductores.addConductor({
-            id: payload.id,
-            idSocket: socket.id,
-            lat: payload.lat,
-            lng: payload.lng,
-            servicio: payload.servicio
+            idConductor: payload!.id
           });
-        
-        console.log('conectar');
-        
-        this.conductores.mostrarConductores();
+
+          console.log('Ver la bandera');
+          console.log(status.data);
+          
+          
+        }
+
+
       });
 
       // --------------------------CONDUCTOR-----------------------------------
-      socket.on('actualizar coordenadas conductor', (payload: {lat: number, lng: number}) => {
+      socket.on('actualizar coordenadas conductor', (payload: {lat: number, lng: number, idPedido: string}) => {
 
-        // TODO: Nuevo, falta enviar el id en el socket
-        // this.conductoresNuevo.actualizarCoordenadas({
-        //   idConductor: 
-        //   lat: payload.lat,
-        //   lng: payload.lng
-        // })
-
-
-        // TODO: Antiguo
-        this.conductores.updateLatLngBySocketId({
-          socketId: socket.id,
-          lat: payload.lat,
-          lng: payload.lng
-        });
         
-        const conductor = this.conductores.getConductorBySocketId(socket.id);
-
-        if (conductor?.status === 'OCUPADO'){
-
-          if (conductor.cliente != null){
-            this.io.to(conductor.cliente?.socketid).emit('actualizar posicion conductor', payload);
+        const pedido = this.getPedidoByIdPedido(payload.idPedido);
+        if (pedido){
+          const cliente = this.getUsuarioById(pedido.idCliente);
+          console.log('enviando las nuevas coordenadas al cliente');
+          if (cliente){
+            this.io.to(cliente.socket).emit('actualizar posicion conductor', payload);
+          }else{
+            console.log('El cliente esta desconectado');
           }
-
         }
-        console.log('actualizar');
-        this.conductores.mostrarConductores();
+
 
       });
       
       // ------------------------CONDUCTOR---------------------------------------
 
-      socket.on('pedido proceso cancelado conductor', (payload: DetallePedido) => {
+      socket.on('pedido proceso cancelado conductor', (payload: {
+        idCliente: string
+      }) => {
 
-        // TODO: Nuevo
-
-
-        // TODO: Antiguo
-        this.conductores.clearStatusBySocketId(socket.id);
-        console.log(`pedido en proceso cancelado por el conductor ${socket.id}`);
-        
-        this.io.to(payload.socket_client_id).emit('pedido en proceso cancelado');
-
-      });
-
-      
-      // ---------------------CONDUCTOR--------------------------------
-      socket.on('finalizar viaje', (payload: DetallePedido) => {
-        
-        // TODO: Nuevo
-
-        // TODO: Antiguo
-        const conductor = this.conductores.getConductorBySocketId(socket.id);
-
-        if (conductor?.status === 'OCUPADO' && conductor.cliente?.id === payload.cliente_id){
-
-          // this.io.to(payload.cliente.)
-
-        }
-
-      });
-
-      // ------------------------CONDUCTOR---------------------------------------
-      socket.on('respuesta del conductor', (payload: DetallePedido) => {
-        
-        console.log(`un conducto ${payload.pedido_aceptado} de este usuario`);
-        
-        
-        if (payload.pedido_aceptado){
-          // Obtener todos los conductores que tienen al cliente en espera, o esta ocupado
-          const conductores = this.conductores.getConductoresByClienteId(payload.socket_client_id);
-          
-          // Primero verifica si hay un conductor que ya a tomado este pedido
-          // Esto lo hago, ya que la conexion a internet puede variar, y puede existir alguien que le dio el boton y todavia este procesando, entonces
-          // si el otro tiene mejor conexion para evitar un choque de dos conductores al mismo cliente, se notifica que este pedido ya a sido tomado por otro
-          // conductor
-          if (conductores.some((conductor: ConductorModels) => conductor.status === 'OCUPADO')){
-            socket.emit('pedido ya tomado');
-            return;
-          }
-          
-          this.conductores.updateStatus({
-            clientId: payload.cliente_id,
-            socketClientId: payload.socket_client_id,
-            socketId: socket.id,
-            status: 'OCUPADO',
-            pedidoId: payload.pedido_id
-          });
-          const conductor = this.conductores.getConductorBySocketId(socket.id);
-          console.log(payload.socket_client_id);
-          
-          this.io.to(payload.socket_client_id).emit('pedido aceptado por conductor', conductor);
-          
-          // TODO: Emitir un mensaje a todos los conductores que estan en espera con este usuario, que este pedido ya a sido tomado
-          conductores.forEach((conductor: ConductorModels) => {
-            if (conductor.status === 'EN_ESPERA' && conductor.socketId != socket.id){
-              this.conductores.clearStatusBySocketId(conductor.socketId);
-              this.io.to(conductor.socketId).emit('pedido ya tomado');
-            }
-          });
-
-
+        const cliente = this.getUsuarioById(payload.idCliente);
+        if (cliente){
+          this.io.to(cliente.socket).emit('pedido en proceso cancelado');
         }else{
-          this.conductores.setStatusDisponible(socket.id);
-          this.actualizarContador({socketId: payload.socket_client_id, contador: -1, isReset: false});
+          console.log('El cliente esta desconectado');
+        }
+
+      });
+
+
+      // ------------------------CONDUCTOR---------------------------------------
+      socket.on('respuesta del conductor', async (
+        payload: {  
+          servicio: string,
+          cliente: string,
+          idCliente: string,
+          idPedido: string,
+          origen: any,
+          destino: any,
+          lat: number,
+          lng: number,
+          pedidoAceptado? :boolean,
+        }
+      ) => {
+        
+        // console.log(`un conducto ${payload.pedido_aceptado} de este usuario`);
+        const pedido = this.getPedidoByIdPedido(payload.idPedido);
+        if (!pedido) return ;
+
+
+
+        // Acepta el pedido
+        if (payload.pedidoAceptado){
+          
+
+
+
+
+          const pedido = this.getPedidoByIdPedido(payload.idPedido);
+          const usuario = this.getUsuarioById(pedido!.idCliente);
+          const conductor = this.getUsuarioBySocket(socket.id);
+
+          const status = await actualizarBanderaConductor({
+            bandera: '0',
+            estado: 'ES',
+            servicio: payload.servicio,
+            idConductor: conductor!.id
+          });
+
+          console.log('Respuesta despues de la bandera');
+          
+          console.log(status.data);
+          
+
+          this.io.to(usuario!.socket).emit('pedido aceptado por conductor', {id: conductor?.id, lat: payload.lat, lng: payload.lng});
+          
+        }else{
+
+          
+
+          // Rechaza el pedido
+          const conductorData = this.getUsuarioBySocket(socket.id);
+
+          const status = await actualizarBanderaConductor({
+            bandera: '0',
+            estado: 'ES',
+            servicio: payload.servicio,
+            idConductor: conductorData!.id
+          });
+
+          console.log('ver bandera');
+          console.log(status.data);
+          
+          
+
+
+          this.nuevoRechazoPedido(conductorData!.id, payload.idPedido);
+
+          const resp = await getConductoresDisponibles(payload.servicio);
+          
+          const conductor = getConductorNoRechazado(resp.data, this.usuarios, pedido, payload.origen, payload.destino);
+  
+          if (conductor != null){
+            
+            if (conductor){
+              this.io.to(conductor.socket).emit('notificacion pedido conductor', {
+                'ok': true,
+                'msg': 'Hay un nuevo cliente',
+                payload
+              });
+            }
+          }else{
+            this.eliminarPedidoByIdPedido(payload.idPedido);
+            console.log('Pedidos restante');
+            this.pedidos.forEach(element => {
+              console.log(element);
+            });
+            
+            socket.emit('respuesta solicitud usuario', {
+              'ok': false,
+              'msg' : 'No hay conductores disponibles',
+            });
+  
+          }
+
         }
 
       });
 
       // ---------------------CONDUCTOR------------------------------
 
-      socket.on('ya estoy aqui', (payload: DetallePedido) => {
+      socket.on('ya estoy aqui', (payload: {idCliente:string}) => {
 
-        console.log('Ya estoy aqui');
-        console.log(payload);
-
-        this.io.to(payload.socket_client_id).emit('El conductor ya esta aqui');
+        const cliente = this.getUsuarioById(payload.idCliente);
+        if (cliente){
+          this.io.to(cliente.socket).emit('El conductor ya esta aqui');
+        }else{
+          console.log('El cliente esta desconectado');
+          
+        }
         
       });
 
       // ---------------------CONDUCTOR-----------------------------
 
-      socket.on('finalizar pedido', (payload: DetallePedido) => {
-
-        this.io.to(payload.socket_client_id).emit('pedido finalizado');
+      socket.on('finalizar pedido', (payload: {
+        idCliente: string
+      }) => {
+        const cliente = this.getUsuarioById(payload.idCliente);
+        if (cliente){
+          this.io.to(cliente.socket).emit('pedido finalizado');
+        }else{
+          console.log('El cliente esta desconectado');
+        }
 
       });
 
       // ---------------------CLIENTE--------------------------------
-      socket.on('solicitar', async (payload: DetallePedido) => {
+      socket.on('solicitar', async (
+      payload: {  
+        servicio: string,
+        cliente: string,
+        idCliente: string,
+        pedidoAceptado? :boolean,
+        idPedido: string,
+        origen: any,
+        destino: any
+      }) => {
         
+        const resp = await getConductoresDisponibles(payload.servicio);
+
+        const conductoresDb : ConductorDbModel[] = resp.data; 
         
-        // const url = `${process.env.URL}/conductorDisponible.php`;
+        let idConductor = getIdConductorCercano(conductoresDb, payload.origen, payload.destino);
 
-        // const formData = new FormData();
-        // formData.append('btip', 'BUES');
-        // formData.append('bestado', 'ES');
-        // const resp = await axios.post(url, formData, {
-        //   headers: {
 
-        //   }
-        // });
+        if (idConductor != ''){
 
-        //   // 'btip': 'BUES'
-        // console.log('Cantidad de conductores====================================');
-        
-        // console.log(resp.data);
-        
+          // Agregar nuevo pedido
+          this.agregarNuevoPedido(
+            new PedidoModel(
+              payload.idPedido,
+              payload.idCliente,
+              null,
+              idConductor,
+              []
+            )
+          );
+          
+          console.log('pedidos');
+          
+          this.pedidos.forEach(element => {
+            console.log(element);
+          });
+          
+          const status = await actualizarBanderaConductor({
+            bandera: '1',
+            estado: 'ES',
+            servicio: payload.servicio,
+            idConductor: idConductor
+          });
 
-        
+          console.log('ver bandera');
+          console.log(status.data);
 
-        // el origen, destino, el [0] es la latitud y el [1] es la longitud
-        console.log(`El cliente ${socket.id} esta solicitando un pedido de ${payload.servicio} en ${payload.origen} hasta el ${payload.destino}`);
-         
-        console.log(payload);
-        payload.socket_client_id = socket.id;
-        this.enviarSolicitud(socket, payload);
+          const usuario = this.getUsuarioById(idConductor);
+          if (usuario){
+            this.io.to(usuario.socket).emit('notificacion pedido conductor', {
+              'ok': true,
+              'msg': 'Hay un nuevo cliente',
+              payload
+            });
+          }
+        }else{
+
+          socket.emit('respuesta solicitud usuario', {
+            'ok': false,
+            'msg' : 'No hay conductores disponibles',
+          });
+
+        }
       
       });
 
       // -----------------------------CLIENTE------------------------------
-      socket.on('cancelar pedido cliente', (payload: {cliente_id: string}) => {
+      socket.on('cancelar pedido cliente', (payload: {idPedido: string}) => {
+        const pedido = this.getPedidoByIdPedido(payload.idPedido);        
+        if (pedido && pedido.idConductorSolicitud != null){
+          const conductor = this.getUsuarioById(pedido.idConductorSolicitud);
+          if (conductor){
+            this.io.to(conductor.socket).emit('pedido cancelado desde cliente');
+          }
+        }
 
-        console.log(`El cliente ${socket.id} ha cancelado el pedido`);
-        
-        const conductores = this.conductores.getConductoresByClienteId(payload.cliente_id);
-
-        conductores.forEach(conductor => {
-          this.solicitudCancelada(conductor.socketId);
-          this.conductores.setStatusDisponible(conductor.socketId);
-        });
+        this.eliminarPedidoByIdPedido(payload.idPedido);
 
       });
 
       // -------------------------------------------------------------------
       socket.on('disconnect', () => {
         
-        console.log(`El cliente ${socket.id} se ha desconectado`);
-        this.conductores.removeConductorBySocketId(socket.id)
-        console.log('desconectar');
-        this.conductores.mostrarConductores();
+        const usuario = this.getUsuarioBySocket(socket.id);
+        if (usuario){
+          const pedido = this.getPedidoByIdCliente(usuario.id);
+          if (pedido){
+            if (!pedido.idConductorAceptado){
+              if (pedido.idConductorSolicitud != null){
+                const conductor = this.getUsuarioById(pedido.idConductorSolicitud);
+                if (conductor){
+                  this.io.to(conductor.socket).emit('pedido cancelado desde cliente');
+                }
+              }
+              this.eliminarPedidoByIdPedido(pedido.idPedido);
+
+            }
+          }
+        }
+        this.eliminarUsuarioBySocket(socket.id);
+
+        console.log('un usuario desconectado');
+        this.usuarios.forEach(element => {
+          console.log(element); 
+        });
 
       });
     });
 
-  }
-
-  private solicitudCancelada(socketId:string){
-    this.io.to(socketId).emit('solicitud cancelada', {});
-  }
-
-  private actualizarContador = (data: {socketId: string, contador: number, isReset: boolean}) => {
-    this.io.to(data.socketId).emit('actualizar contador', {
-      contador: data.contador,
-      isReset: data.isReset
-    });
-  }
-
-  private enviarSolicitud = (socket: Socket, payload: DetallePedido) => {
-
-    var cantidadDisponible = 0;
-
-    const conductor = this.conductores.getConductorDistanciaCorta({lat: payload.origen[0], lng: payload.origen[1]});
-    
-    this.conductores.updateStatus({
-      clientId: payload.cliente_id,
-      socketClientId: payload.socket_client_id,
-      socketId: conductor.socketId,
-      status: 'EN_ESPERA',
-      pedidoId: payload.pedido_id 
-    });
-
-    if (conductor.id === ''){
-
-      console.log('para el cliente. No hay conductores disponibles');
-      
-      this.io.to(payload.socket_client_id).emit('respuesta solicitud usuario', {
-        'ok': false,
-        'msg' : 'No hay conductores disponibles',
-      });
-    }else{
-
-      console.log('Desde el cliente, solicitud enviada al conductor');
-      this.io.to(conductor.socketId).emit('notificacion pedido conductor', {
-        'ok': true,
-        'msg': 'Hay un nuevo cliente',
-        payload
-        
-      });
-    
-    }
-
-    this.actualizarContador({socketId: socket.id,contador: cantidadDisponible, isReset: true});
-
-
-  
   }
 
 }

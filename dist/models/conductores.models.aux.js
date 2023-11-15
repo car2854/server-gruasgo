@@ -7,11 +7,12 @@ class Conductors {
         this.pedidos = [];
         this.getConductorById = (id) => this.conductores.find((conductor) => conductor.id === id);
         this.getPedidoByIdPedido = (idPedido) => this.pedidos.find((pedido) => pedido.idPedido === idPedido);
+        this.eliminarUsuarioById = (socket) => {
+            this.conductores = this.conductores.filter((usuario) => usuario.socket != socket).map((_) => _);
+        };
         this.agregarNuevoConductor = (conductor) => {
             if (this.getConductorById(conductor.id) == null) {
                 const existe = this.pedidos.some((pedido) => pedido.idConductorAceptado === conductor.id);
-                if (existe)
-                    conductor.estado = 'ocupado';
                 this.conductores.push(conductor);
             }
         };
@@ -48,13 +49,6 @@ class Conductors {
             const pedido = this.getPedidoByIdPedido(idPedido);
             if (pedido) {
                 this.pedidos = this.pedidos.filter((data) => data !== pedido);
-            }
-        };
-        this.actualizarCoordenadas = (data) => {
-            const conductor = this.getConductorById(data.idConductor);
-            if (conductor) {
-                conductor.lat = data.lat;
-                conductor.lng = data.lng;
             }
         };
         this.mostrarConductores = () => {
