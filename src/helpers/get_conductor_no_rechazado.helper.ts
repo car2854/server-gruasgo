@@ -14,7 +14,7 @@ export const getConductorNoRechazado = (
   
   if (conductoresDb.length === 0) return null;
 
-  let idConductor = getIdConductorCercano(conductoresDb, origen, destino);
+  let idConductor = getIdConductorCercano(conductoresDb, origen);
 
   const conductor = usuarios.find((element) => element.id === idConductor);
 

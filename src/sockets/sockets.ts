@@ -286,12 +286,28 @@ class SocketsConfig {
         destino: any
       }) => {
         
-        const resp = await getConductoresDisponibles(payload.servicio);
+        console.log('--------------------------------------------');
+        
+        
+        console.log('Listas de pedidos');
+        console.log(this.pedidos);
 
+        console.log('Lista de usuario');
+        console.log(this.usuarios);
+        
+        
+        
+        const resp = await getConductoresDisponibles(payload.servicio);
+        console.log('respuesta del servidor para obtener todos los uaurios libres');
+        console.log(resp.data);
+        
+        
         const conductoresDb : ConductorDbModel[] = resp.data; 
         
-        let idConductor = getIdConductorCercano(conductoresDb, payload.origen, payload.destino);
-
+        let idConductor = getIdConductorCercano(conductoresDb, payload.origen);
+        console.log('El id del conductor la cual se enviara el mensaje');
+        console.log(idConductor);
+        
 
         if (idConductor != ''){
 
@@ -321,8 +337,13 @@ class SocketsConfig {
 
           console.log('ver bandera');
           console.log(status.data);
+          
 
           const usuario = this.getUsuarioById(idConductor);
+
+          console.log('A este conductor se le enviara el mensaje');
+          console.log(usuario);
+
           if (usuario){
             this.io.to(usuario.socket).emit('notificacion pedido conductor', {
               'ok': true,
@@ -374,6 +395,9 @@ class SocketsConfig {
             }
           }
         }
+
+        console.log("este usuario se va a ir");
+        console.log(usuario);
         this.eliminarUsuarioBySocket(socket.id);
 
         console.log('un usuario desconectado');

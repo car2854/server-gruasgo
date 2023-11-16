@@ -184,9 +184,18 @@ class SocketsConfig {
             });
             // ---------------------CLIENTE--------------------------------
             socket.on('solicitar', (payload) => __awaiter(this, void 0, void 0, function* () {
+                console.log('--------------------------------------------');
+                console.log('Listas de pedidos');
+                console.log(this.pedidos);
+                console.log('Lista de usuario');
+                console.log(this.usuarios);
                 const resp = yield (0, http_services_1.getConductoresDisponibles)(payload.servicio);
+                console.log('respuesta del servidor para obtener todos los uaurios libres');
+                console.log(resp.data);
                 const conductoresDb = resp.data;
                 let idConductor = (0, get_id_conductor_cercano_1.getIdConductorCercano)(conductoresDb, payload.origen, payload.destino);
+                console.log('El id del conductor la cual se enviara el mensaje');
+                console.log(idConductor);
                 if (idConductor != '') {
                     // Agregar nuevo pedido
                     this.agregarNuevoPedido(new clases_models_aux_1.PedidoModel(payload.idPedido, payload.idCliente, null, idConductor, []));
@@ -203,6 +212,8 @@ class SocketsConfig {
                     console.log('ver bandera');
                     console.log(status.data);
                     const usuario = this.getUsuarioById(idConductor);
+                    console.log('A este conductor se le enviara el mensaje');
+                    console.log(usuario);
                     if (usuario) {
                         this.io.to(usuario.socket).emit('notificacion pedido conductor', {
                             'ok': true,
@@ -246,6 +257,8 @@ class SocketsConfig {
                         }
                     }
                 }
+                console.log("este usuario se va a ir");
+                console.log(usuario);
                 this.eliminarUsuarioBySocket(socket.id);
                 console.log('un usuario desconectado');
                 this.usuarios.forEach(element => {
