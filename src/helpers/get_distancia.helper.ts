@@ -1,6 +1,10 @@
 export const getDistanciaHelpers = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const radioTierra = 6371; // Radio de la Tierra en kilómetros
-
+  console.log(lat1);
+  console.log(lon1);
+  console.log(lat2);
+  console.log(lon2);
+  
   const dLat = toRadians(lat2 - lat1);
   const dLon = toRadians(lon2 - lon1);
 

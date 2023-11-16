@@ -6,7 +6,13 @@ export const getIdConductorCercano = (conductores: ConductorDbModel[], origen: a
   let idConductor = '';
   conductores.forEach((data) => {
     
-    const distancia = getDistanciaHelpers(origen[0], origen[1], data.Lat, data.Lng);
+
+    
+    const distancia = getDistanciaHelpers(origen[0], origen[1], data.Lat, data.Log);
+    console.log('distancia');
+    
+    console.log(distancia);
+    
     if (distancia < distanciaCorta){
       distanciaCorta = distancia;
       idConductor = data.idConductor;
@@ -14,5 +20,9 @@ export const getIdConductorCercano = (conductores: ConductorDbModel[], origen: a
 
   });
 
+  console.log('el id conductor es');
+  console.log(idConductor);
+  
+  
   return idConductor;
 }
