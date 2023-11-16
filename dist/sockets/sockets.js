@@ -193,7 +193,7 @@ class SocketsConfig {
                 console.log('respuesta del servidor para obtener todos los uaurios libres');
                 console.log(resp.data);
                 const conductoresDb = resp.data;
-                let idConductor = (0, get_id_conductor_cercano_1.getIdConductorCercano)(conductoresDb, payload.origen, payload.destino);
+                let idConductor = (0, get_id_conductor_cercano_1.getIdConductorCercano)(conductoresDb, payload.origen);
                 console.log('El id del conductor la cual se enviara el mensaje');
                 console.log(idConductor);
                 if (idConductor != '') {

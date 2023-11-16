@@ -6,7 +6,7 @@ const get_id_conductor_cercano_1 = require("./get_id_conductor_cercano");
 const getConductorNoRechazado = (conductoresDb, usuarios, pedido, origen, destino) => {
     if (conductoresDb.length === 0)
         return null;
-    let idConductor = (0, get_id_conductor_cercano_1.getIdConductorCercano)(conductoresDb, origen, destino);
+    let idConductor = (0, get_id_conductor_cercano_1.getIdConductorCercano)(conductoresDb, origen);
     const conductor = usuarios.find((element) => element.id === idConductor);
     if (conductor) {
         const fueRechazado = pedido.idConductoresRechazados.some(element => element === conductor.id);
