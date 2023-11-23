@@ -73,16 +73,24 @@ class SocketsConfig {
             }));
             // --------------------------CONDUCTOR-----------------------------------
             socket.on('actualizar coordenadas conductor', (payload) => {
-                const pedido = this.getPedidoByIdPedido(payload.idPedido);
-                if (pedido) {
-                    const cliente = this.getUsuarioById(pedido.idCliente);
-                    console.log('enviando las nuevas coordenadas al cliente');
-                    if (cliente) {
-                        this.io.to(cliente.socket).emit('actualizar posicion conductor', payload);
-                    }
-                    else {
-                        console.log('El cliente esta desconectado');
-                    }
+                // console.log(this.pedidos);
+                // const pedido = this.getPedidoByIdPedido(payload.idPedido);
+                // if (pedido){
+                //   const cliente = this.getUsuarioById(pedido.idCliente);
+                //   console.log('enviando las nuevas coordenadas al cliente');
+                //   if (cliente){
+                //     this.io.to(cliente.socket).emit('actualizar posicion conductor', payload);
+                //   }else{
+                //     console.log('El cliente esta desconectado');
+                //   }
+                // }
+                console.log(payload.idCliente);
+                const usuario = this.getUsuarioById(payload.idCliente);
+                if (usuario) {
+                    this.io.to(usuario.socket).emit('actualizar posicion conductor', payload);
+                }
+                else {
+                    console.log('El cliente esta desconectado');
                 }
             });
             // ------------------------CONDUCTOR---------------------------------------
@@ -114,7 +122,13 @@ class SocketsConfig {
                     });
                     console.log('Respuesta despues de la bandera');
                     console.log(status.data);
-                    this.io.to(usuario.socket).emit('pedido aceptado por conductor', { id: conductor === null || conductor === void 0 ? void 0 : conductor.id, lat: payload.lat, lng: payload.lng });
+                    this.io.to(usuario.socket).emit('pedido aceptado por conductor', {
+                        id: conductor === null || conductor === void 0 ? void 0 : conductor.id,
+                        lat: payload.lat,
+                        lng: payload.lng,
+                        nombreConductor: payload.nombreConductor,
+                        placa: payload.placa
+                    });
                 }
                 else {
                     // Rechaza el pedido
@@ -253,6 +267,7 @@ class SocketsConfig {
                                     this.io.to(conductor.socket).emit('pedido cancelado desde cliente');
                                 }
                             }
+                            console.log('eliminar este pedido de la lista');
                             this.eliminarPedidoByIdPedido(pedido.idPedido);
                         }
                     }
