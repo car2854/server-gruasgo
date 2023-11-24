@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.actualizarBanderaConductor = exports.getConductoresDisponibles = void 0;
+exports.updateEstadoPedidoCACL = exports.getPedido = exports.actualizarBanderaConductor = exports.getConductoresDisponibles = void 0;
 const axios_1 = __importDefault(require("axios"));
 const getConductoresDisponibles = (servicio) => __awaiter(void 0, void 0, void 0, function* () {
     const url = `${process.env.URL}/conductorDisponible.php`;
@@ -36,3 +36,22 @@ const actualizarBanderaConductor = (data) => __awaiter(void 0, void 0, void 0, f
     return resp;
 });
 exports.actualizarBanderaConductor = actualizarBanderaConductor;
+const getPedido = (data) => __awaiter(void 0, void 0, void 0, function* () {
+    const url = `${process.env.URL}/pedido.php`;
+    const formData = new FormData();
+    formData.append('btip', 'devPedido');
+    formData.append('bidpedido', data.idPedido);
+    const resp = yield axios_1.default.post(url, formData);
+    return resp;
+});
+exports.getPedido = getPedido;
+const updateEstadoPedidoCACL = (data) => __awaiter(void 0, void 0, void 0, function* () {
+    const url = `${process.env.URL}/pedido.php`;
+    const formData = new FormData();
+    formData.append('btip', 'updEstado');
+    formData.append('bidpedido', data.idPedido);
+    formData.append('bestado', "CACL");
+    const resp = yield axios_1.default.post(url, formData);
+    return resp;
+});
+exports.updateEstadoPedidoCACL = updateEstadoPedidoCACL;

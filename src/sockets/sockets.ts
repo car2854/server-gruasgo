@@ -6,7 +6,7 @@ import ConductorModels from '../models/conductor.models';
 import axios from 'axios';
 import { PedidoModel, UsuarioModel } from '../models/clases.models.aux';
 import { getDistanciaHelpers } from '../helpers/get_distancia.helper';
-import { actualizarBanderaConductor, getConductoresDisponibles } from '../services/http.services';
+import { actualizarBanderaConductor, getConductoresDisponibles, getPedido, updateEstadoPedidoCACL } from '../services/http.services';
 import { getIdConductorCercano } from '../helpers/get_id_conductor_cercano';
 import { getConductorNoRechazado } from '../helpers/get_conductor_no_rechazado.helper';
 
@@ -292,6 +292,23 @@ class SocketsConfig {
 
       });
 
+      // ---------------------CLIENTE -------------------------------
+
+      socket.on('pedido CACL cancelado cliente', (payload: {
+        idConductor: string
+      }) => {
+
+        const usuario = this.getUsuarioById(payload.idConductor);
+
+        if (usuario){
+
+          this.io.to(usuario.socket).emit('pedido CACL cancelado');
+
+        }
+
+      });
+
+
       // ---------------------CLIENTE--------------------------------
       socket.on('solicitar', async (
       payload: {  
@@ -325,20 +342,21 @@ class SocketsConfig {
         let idConductor = getIdConductorCercano(conductoresDb, payload.origen);
         console.log('El id del conductor la cual se enviara el mensaje');
         console.log(idConductor);
-        
+
+        this.agregarNuevoPedido(
+          new PedidoModel(
+            payload.idPedido,
+            payload.idCliente,
+            null,
+            idConductor,
+            []
+          )
+        );
 
         if (idConductor != ''){
 
           // Agregar nuevo pedido
-          this.agregarNuevoPedido(
-            new PedidoModel(
-              payload.idPedido,
-              payload.idCliente,
-              null,
-              idConductor,
-              []
-            )
-          );
+
           
           console.log('pedidos');
           
@@ -388,6 +406,7 @@ class SocketsConfig {
           if (conductor){
             this.io.to(conductor.socket).emit('pedido cancelado desde cliente');
           }
+          this.eliminarPedidoByIdPedido(pedido.idPedido);
         }
 
         this.eliminarPedidoByIdPedido(payload.idPedido);
@@ -395,26 +414,60 @@ class SocketsConfig {
       });
 
       // -------------------------------------------------------------------
-      socket.on('disconnect', () => {
+      socket.on('disconnect', async () => {
         
         const usuario = this.getUsuarioBySocket(socket.id);
+        console.log(usuario);
+        
         if (usuario){
           const pedido = this.getPedidoByIdCliente(usuario.id);
+          console.log(pedido);
+          
           if (pedido){
-            if (!pedido.idConductorAceptado){
-              if (pedido.idConductorSolicitud != null){
-                const conductor = this.getUsuarioById(pedido.idConductorSolicitud);
-                if (conductor){
-                  this.io.to(conductor.socket).emit('pedido cancelado desde cliente');
-                }
+
+
+            const pedidoRespose = await getPedido({
+              idPedido: pedido.idPedido
+            });
+
+            if (pedidoRespose.data.length > 0){
+
+              if (pedidoRespose.data[0]['Estado'] === 'SOCL'){
+                const resp = await updateEstadoPedidoCACL({
+                  idPedido: pedido.idPedido
+                });
+
+                console.log('El estado del pedido a cambiado a CACL');
+                console.log(resp.data);
+                
+                
               }
-              console.log('eliminar este pedido de la lista');
               
-              this.eliminarPedidoByIdPedido(pedido.idPedido);
+              if (!pedido.idConductorAceptado){
+                if (pedido.idConductorSolicitud != null){
+                  const conductor = this.getUsuarioById(pedido.idConductorSolicitud);
+                  if (conductor){
+                    this.io.to(conductor.socket).emit('pedido cancelado desde cliente', {
+                      pedidoId: pedido.idPedido
+                    });
+                  }
+                }
+                console.log('eliminar este pedido de la lista');
+                
+                this.eliminarPedidoByIdPedido(pedido.idPedido);
+  
+              }
 
             }
+
+
           }
         }
+
+        console.log('Lista de pedidos');
+        console.log(this.pedidos);
+        
+        
 
         console.log("este usuario se va a ir");
         console.log(usuario);
