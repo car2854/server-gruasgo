@@ -190,7 +190,7 @@ class SocketsConfig {
             socket.on('finalizar pedido', (payload) => {
                 const cliente = this.getUsuarioById(payload.idCliente);
                 if (cliente) {
-                    this.io.to(cliente.socket).emit('pedido finalizado');
+                    this.io.to(cliente.socket).emit('pedido finalizado', payload);
                 }
                 else {
                     console.log('El cliente esta desconectado');
