@@ -17,7 +17,7 @@ const actualizarBanderaConductor = async(data: {
   bandera: string,
   estado: string,
   servicio: string,
-  idConductor: string
+  idConductor: number
 }) => {
   const url = `${process.env.URL}/conductorDisponible.php`;
 
@@ -26,19 +26,19 @@ const actualizarBanderaConductor = async(data: {
   formData.append('bbandera', data.bandera);
   formData.append('bestado', data.estado);
   formData.append('bsubservicio', data.servicio);
-  formData.append('bidconductor', data.idConductor);
+  formData.append('bidconductor', data.idConductor.toString());
   const resp = await axios.post(url, formData);
 
   return resp;
 }
 
 const getPedido = async(data: {
-  idPedido:string
+  idPedido:number
 }) => {
   const url = `${process.env.URL}/pedido.php`;
   const formData = new FormData();
   formData.append('btip', 'devPedido');
-  formData.append('bidpedido', data.idPedido);
+  formData.append('bidpedido', data.idPedido.toString());
 
   const resp = await axios.post(url, formData);
 
@@ -46,12 +46,12 @@ const getPedido = async(data: {
 }
 
 const updateEstadoPedidoCACL = async(data: {
-  idPedido: string
+  idPedido: number
 }) => {
   const url = `${process.env.URL}/pedido.php`;
   const formData = new FormData();
   formData.append('btip', 'updEstado');
-  formData.append('bidpedido', data.idPedido);
+  formData.append('bidpedido', data.idPedido.toString());
   formData.append('bestado', "CACL");
 
   const resp = await axios.post(url, formData);

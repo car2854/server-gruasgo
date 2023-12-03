@@ -3,7 +3,7 @@ import { getDistanciaHelpers } from "./get_distancia.helper";
 export const getIdConductorCercano = (conductores: ConductorDbModel[], origen: any) => {
 
   let distanciaCorta = 999999999999;
-  let idConductor = '';
+  let idConductor = 0;
   conductores.forEach((data) => {
     
 

@@ -25,7 +25,7 @@ class SocketsConfig {
   
 
   // usuario
-  private getUsuarioById = (id: string) => this.usuarios.find((usuario) => usuario.id === id);
+  private getUsuarioById = (id: number) => this.usuarios.find((usuario) => usuario.id === id);
   private getUsuarioBySocket = (socket: string) => this.usuarios.find((usuario) => usuario.socket === socket);
 
   private eliminarUsuarioBySocket = (socket: string) => {
@@ -38,19 +38,19 @@ class SocketsConfig {
   }
 
   // Pedido
-  private getPedidoByIdPedido = (idPedido: string) => this.pedidos.find((pedido) => pedido.idPedido === idPedido);
-  private getPedidoByIdCliente = (idCliente: string) => this.pedidos.find((pedido) => pedido.idCliente === idCliente);
+  private getPedidoByIdPedido = (idPedido: number) => this.pedidos.find((pedido) => pedido.idPedido === idPedido);
+  private getPedidoByIdCliente = (idCliente: number) => this.pedidos.find((pedido) => pedido.idCliente === idCliente);
 
   private agregarNuevoPedido = (nuevoPedido: PedidoModel) => {
     const pedido = this.getPedidoByIdPedido(nuevoPedido.idPedido);
     if (pedido==null) this.pedidos.push(nuevoPedido);
   }
 
-  private eliminarPedidoByIdPedido = (idPedido:string) => {
+  private eliminarPedidoByIdPedido = (idPedido:number) => {
     this.pedidos = this.pedidos.filter(pedido => pedido.idPedido != idPedido).map(_ => _);
   }
 
-  private nuevoRechazoPedido = (idConductor: string, idPedido: string) => {
+  private nuevoRechazoPedido = (idConductor: number, idPedido: number) => {
 
     const pedido = this.getPedidoByIdPedido(idPedido);
     const existe = pedido?.idConductoresRechazados.some((data) => data === idConductor);
@@ -69,7 +69,7 @@ class SocketsConfig {
       console.log(`El cliente ${socket.id} se ha conectado`);
       
       // -----------------------CONDUCTOR--------------------------------------------
-      socket.on('usuario online', async (payload: {id:string, servicio?: string}) => {
+      socket.on('usuario online', async (payload: {id:number, servicio?: string}) => {
         
         
         this.agregarNuevoUsuario(new UsuarioModel( payload.id, socket.id ));
@@ -100,7 +100,7 @@ class SocketsConfig {
       });
 
       // --------------------------CONDUCTOR-----------------------------------
-      socket.on('actualizar coordenadas conductor', (payload: {lat: number, lng: number, rotation:any, idCliente: string}) => {
+      socket.on('actualizar coordenadas conductor', (payload: {lat: number, lng: number, rotation:any, idCliente: number}) => {
 
         // console.log(this.pedidos);
         
@@ -130,7 +130,7 @@ class SocketsConfig {
       // ------------------------CONDUCTOR---------------------------------------
 
       socket.on('pedido proceso cancelado conductor', (payload: {
-        idCliente: string
+        idCliente: number
       }) => {
 
         const cliente = this.getUsuarioById(payload.idCliente);
@@ -148,8 +148,8 @@ class SocketsConfig {
         payload: {  
           servicio: string,
           cliente: string,
-          idCliente: string,
-          idPedido: string,
+          idCliente: number,
+          idPedido: number,
           origen: any,
           destino: any,
           lat: number,
@@ -252,7 +252,7 @@ class SocketsConfig {
 
       // ---------------------CONDUCTOR------------------------------
 
-      socket.on('ya estoy aqui', (payload: {idCliente:string}) => {
+      socket.on('ya estoy aqui', (payload: {idCliente:number}) => {
 
         const cliente = this.getUsuarioById(payload.idCliente);
         if (cliente){
@@ -264,7 +264,7 @@ class SocketsConfig {
         
       });
 
-      socket.on('comenzar carrera', (payload: {idCliente:string}) => {
+      socket.on('comenzar carrera', (payload: {idCliente:number}) => {
 
         const cliente = this.getUsuarioById(payload.idCliente);
         console.log('El condfuctor ncomenzar carrera '+payload.idCliente);
@@ -281,7 +281,7 @@ class SocketsConfig {
       // ---------------------CONDUCTOR-----------------------------
 
       socket.on('finalizar pedido', (payload: {
-        idCliente: string,
+        idCliente: number,
         minutos?: string
       }) => {
         const cliente = this.getUsuarioById(payload.idCliente);
@@ -296,7 +296,7 @@ class SocketsConfig {
       // ---------------------CLIENTE -------------------------------
 
       socket.on('pedido CACL cancelado cliente', (payload: {
-        idConductor: string
+        idConductor: number
       }) => {
 
         const usuario = this.getUsuarioById(payload.idConductor);
@@ -315,9 +315,9 @@ class SocketsConfig {
       payload: {  
         servicio: string,
         cliente: string,
-        idCliente: string,
+        idCliente: number,
         pedidoAceptado? :boolean,
-        idPedido: string,
+        idPedido: number,
         origen: any,
         destino: any
       }) => {
@@ -354,7 +354,7 @@ class SocketsConfig {
           )
         );
 
-        if (idConductor != ''){
+        if (idConductor != 0){
 
           // Agregar nuevo pedido
 
@@ -400,7 +400,7 @@ class SocketsConfig {
       });
 
       // -----------------------------CLIENTE------------------------------
-      socket.on('cancelar pedido cliente', (payload: {idPedido: string}) => {
+      socket.on('cancelar pedido cliente', (payload: {idPedido: number}) => {
         const pedido = this.getPedidoByIdPedido(payload.idPedido);        
         if (pedido && pedido.idConductorSolicitud != null){
           const conductor = this.getUsuarioById(pedido.idConductorSolicitud);
