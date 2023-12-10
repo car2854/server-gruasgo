@@ -218,7 +218,7 @@ class SocketsConfig {
                 console.log('El id del conductor la cual se enviara el mensaje');
                 console.log(idConductor);
                 this.agregarNuevoPedido(new clases_models_aux_1.PedidoModel(payload.idPedido, payload.idCliente, null, idConductor, []));
-                if (idConductor != '') {
+                if (idConductor != 0) {
                     // Agregar nuevo pedido
                     console.log('pedidos');
                     this.pedidos.forEach(element => {

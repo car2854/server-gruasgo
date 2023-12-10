@@ -78,29 +78,65 @@ class MapController {
                 // console.log(data1);
                 // console.log('-----------------');
                 // const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${place}&region=BO&location=-17.7867406,-63.1828296&radius=31000&key=${process.env.API_KEY_GOOGLE_MAP}&limit=5`;
+                // const API_KEY = process.env.API_KEY_GOOGLE_MAP;
+                // const baseUrl = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
+                // console.log(location);
+                // const resp = await axios.get(baseUrl, {
+                //   params: {
+                //     location: location,
+                //     radius: 31000,
+                //     key: API_KEY,
+                //     keyword: place,
+                //     language: 'es'
+                //   }
+                // });
+                // console.log('==========================');
+                // const list = [{}];
+                // resp.data['results'].forEach((element:any) => {
+                //   if (list.length === 10) return;
+                //   console.log(element);
+                //   if (element){
+                //     list.push({
+                //       name: element['name'],
+                //       position: element['geometry']['location']
+                //     });
+                //   }
+                // });
+                // https://maps.googleapis.com/maps/api/place/autocomplete/json
+                // ?input=amoeba
+                // &location=37.76999%2C-122.44696
+                // &radius=500
+                // &strictbounds=true
+                // &types=establishment
+                // &key=YOUR_API_KEY
                 const API_KEY = process.env.API_KEY_GOOGLE_MAP;
-                const baseUrl = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
-                // const resp = await axios.get(url);
+                const baseUrl = 'https://maps.googleapis.com/maps/api/place/autocomplete/json';
                 const resp = yield axios_1.default.get(baseUrl, {
                     params: {
-                        location: '-17.7867406,-63.1828296',
+                        location: '-17.783687,-63.180356',
                         radius: 31000,
                         key: API_KEY,
-                        keyword: place,
+                        strictbounds: true,
+                        types: 'address',
+                        input: place,
                         language: 'es'
                     }
                 });
+                console.log('==========================');
+                // console.log(resp.data);
                 const list = [{}];
-                resp.data['results'].forEach((element) => {
+                resp.data['predictions'].forEach((element) => {
+                    // console.log(element);
                     if (list.length === 6)
                         return;
                     if (element) {
                         list.push({
-                            name: element['name'],
-                            position: element['geometry']['location']
+                            name: element['terms'][0]['value'],
+                            place_id: element['place_id']
                         });
                     }
                 });
+                console.log(list);
                 return res.json({
                     ok: true,
                     places: list

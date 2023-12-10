@@ -31,7 +31,7 @@ const actualizarBanderaConductor = (data) => __awaiter(void 0, void 0, void 0, f
     formData.append('bbandera', data.bandera);
     formData.append('bestado', data.estado);
     formData.append('bsubservicio', data.servicio);
-    formData.append('bidconductor', data.idConductor);
+    formData.append('bidconductor', data.idConductor.toString());
     const resp = yield axios_1.default.post(url, formData);
     return resp;
 });
@@ -40,7 +40,7 @@ const getPedido = (data) => __awaiter(void 0, void 0, void 0, function* () {
     const url = `${process.env.URL}/pedido.php`;
     const formData = new FormData();
     formData.append('btip', 'devPedido');
-    formData.append('bidpedido', data.idPedido);
+    formData.append('bidpedido', data.idPedido.toString());
     const resp = yield axios_1.default.post(url, formData);
     return resp;
 });
@@ -49,7 +49,7 @@ const updateEstadoPedidoCACL = (data) => __awaiter(void 0, void 0, void 0, funct
     const url = `${process.env.URL}/pedido.php`;
     const formData = new FormData();
     formData.append('btip', 'updEstado');
-    formData.append('bidpedido', data.idPedido);
+    formData.append('bidpedido', data.idPedido.toString());
     formData.append('bestado', "CACL");
     const resp = yield axios_1.default.post(url, formData);
     return resp;
