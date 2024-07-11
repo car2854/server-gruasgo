@@ -72,29 +72,29 @@ class SocketsConfig {
       socket.on('usuario online', async (payload: {id:number, servicio?: string}) => {
         
         
-        this.agregarNuevoUsuario(new UsuarioModel( payload.id, socket.id ));
+        // this.agregarNuevoUsuario(new UsuarioModel( payload.id, socket.id ));
 
-        console.log('usuarios online');
+        // console.log('usuarios online');
         
-        this.usuarios.forEach(element => {
-          console.log(element);
-        });
+        // this.usuarios.forEach(element => {
+        //   console.log(element);
+        // });
         
-        console.log(payload.servicio);
+        // console.log(payload.servicio);
         
-        if (payload.servicio != null){
-          const status = await actualizarBanderaConductor({
-            bandera: '0',
-            estado: 'ES',
-            servicio: payload.servicio,
-            idConductor: payload!.id
-          });
+        // if (payload.servicio != null){
+        //   const status = await actualizarBanderaConductor({
+        //     bandera: '0',
+        //     estado: 'ES',
+        //     servicio: payload.servicio,
+        //     idConductor: payload!.id
+        //   });
 
-          console.log('Ver la bandera');
-          console.log(status.data);
+        //   console.log('Ver la bandera');
+        //   console.log(status.data);
           
           
-        }
+        // }
 
 
       });
